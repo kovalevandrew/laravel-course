@@ -1,4 +1,4 @@
-const API = 'http://127.0.0.1:8000'
+const API = 'http://localhost:8000'
 
 export async function getUser() {
   const res = await fetch(`${API}/api/user`, {

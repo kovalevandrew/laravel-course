@@ -17,21 +17,61 @@ Route::get('/hello', function () {
     ]);
 });
 
-Route::get('/posts', function () {
-    return Post::latest()->get();
-});
+Route::middleware('auth:sanctum')->group(function () {
+    Route::get('/posts', function () {
+        return Post::latest()->get();
+    });
 
-Route::post('/posts', function (Request $request) {
-    $data = $request->validate([
-        'title' => 'required|string|max:255',
-        'content' => 'required|string',
-    ]);
+    Route::post('/posts', function (Request $request) {
+        $data = $request->validate([
+            'title' => 'required|string|max:255',
+            'content' => 'required|string',
+        ]);
 
-    return Post::create($data);
+        return Post::create($data);
+    });
+
+    Route::put('/posts/{id}', function (\Illuminate\Http\Request $request, $id) {
+        $post = \App\Models\Post::findOrFail($id);
+    
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'content' => 'required|string',
+        ]);
+    
+        $post->update($validated);
+    
+        return response()->json($post);
+    });
+    
+
+    Route::delete('/posts/{id}', function ($id) {
+        return Post::destroy($id);
+    });
+
+    Route::get('/user', function (Request $request) {
+        return $request->user();
+    });
+
+    Route::post('/logout', function () {
+        auth()->logout();
+        return response()->json(['message' => 'Logged out']);
+    });
 });
 
 Route::delete('/posts/{id}', function ($id) {
     return Post::destroy($id);
+});
+
+// Логін
+Route::post('/login', function (Request $request) {
+    $credentials = $request->only('email', 'password');
+
+    if (!Auth::attempt($credentials)) {
+        return response()->json(['message' => 'Invalid credentials'], 401);
+    }
+
+    return response()->json(Auth::user());
 });
 
 // Реєстрація
@@ -51,26 +91,4 @@ Route::post('/register', function (Request $request) {
     Auth::login($user);
 
     return response()->json($user);
-});
-
-// Логін
-Route::post('/login', function (Request $request) {
-    $credentials = $request->only('email', 'password');
-
-    if (!Auth::attempt($credentials)) {
-        return response()->json(['message' => 'Invalid credentials'], 401);
-    }
-
-    return response()->json(Auth::user());
-});
-
-// Отримати поточного користувача
-Route::middleware('auth:sanctum')->get('/user', function (Request $request) {
-    return $request->user();
-});
-
-// Вихід
-Route::post('/logout', function () {
-    Auth::logout();
-    return response()->json(['message' => 'Logged out']);
 });
